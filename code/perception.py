@@ -90,6 +90,9 @@ def get_world_coords_from_binary_map(threshed, rover_xpos, rover_ypos, rover_yaw
         worldmap.shape[0], scale)
     return x_world, y_world
 
+def is_motion_stable(pitch, roll, threshold=(0.3, 0.3)):
+    return (abs(pitch) < threshold[0]) & (abs(roll) < threshold[1])
+
 # Define a function to perform a perspective transform
 def perspect_transform(img, src, dst):
            
@@ -123,7 +126,7 @@ def perception_step(Rover):
         # Example: Rover.vision_image[:,:,0] = obstacle color-thresholded binary image
         #          Rover.vision_image[:,:,1] = rock_sample color-thresholded binary image
         #          Rover.vision_image[:,:,2] = navigable terrain color-thresholded binary image
-    Rover.vision_image[:,:,0] = obstacles_threshed * 255
+    Rover.vision_image[:,:,0] = obstacles_threshed * 150
     Rover.vision_image[:,:,1] = rock_threshed * 255
     Rover.vision_image[:,:,2] = navigable_threshed * 255
     # 5) Convert map image pixel values to rover-centric coords
@@ -148,9 +151,10 @@ def perception_step(Rover):
         # Example: Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
         #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
-    Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
+    if (is_motion_stable(Rover.pitch, Rover.roll)):
+        Rover.worldmap[obstacle_y_world, obstacle_x_world, 0] += 1
+        Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
     Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
-    Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
     # 8) Convert rover-centric pixel positions to polar coordinates
     # Update Rover pixel distances and angles
         # Rover.nav_dists = rover_centric_pixel_distances
