@@ -8,10 +8,12 @@ def decision_step(Rover):
     # Implement conditionals to decide what to do given perception data
     # Here you're all set up with some basic functionality but you'll need to
     # improve on this decision tree to do a good job of navigating autonomously!
-
+    smoothing_angle = 4
+    over_steering_angle = 30
     # Example:
     # Check if we have vision data to make decisions with
     if Rover.nav_angles is not None:
+        nav_angles = np.mean(Rover.nav_angles * 180/np.pi)
         # Check for Rover.mode status
         if Rover.mode == 'forward': 
             # Check the extent of navigable terrain
@@ -24,8 +26,13 @@ def decision_step(Rover):
                 else: # Else coast
                     Rover.throttle = 0
                 Rover.brake = 0
-                # Set steering to average angle clipped to the range +/- 15
-                Rover.steer = np.clip(np.mean(Rover.nav_angles * 180/np.pi), -15, 15)
+                Rover.steer = 0
+                if abs(nav_angles) > over_steering_angle:
+                    Rover.brake = Rover.brake_set
+                    Rover.mode = 'stop'
+                elif abs(nav_angles) > smoothing_angle:
+                    # Set steering to average angle clipped to the range +/- 15
+                    Rover.steer = np.clip(nav_angles, -15, 15)
             # If there's a lack of navigable terrain pixels then go to 'stop' mode
             elif len(Rover.nav_angles) < Rover.stop_forward:
                     # Set mode to "stop" and hit the brakes!
@@ -52,7 +59,7 @@ def decision_step(Rover):
                     # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
                     Rover.steer = -15 # Could be more clever here about which way to turn
                 # If we're stopped but see sufficient navigable terrain in front then go!
-                if len(Rover.nav_angles) >= Rover.go_forward:
+                if ((len(Rover.nav_angles) >= Rover.go_forward) and (abs(nav_angles) < over_steering_angle)): 
                     # Set throttle back to stored value
                     Rover.throttle = Rover.throttle_set
                     # Release the brake
