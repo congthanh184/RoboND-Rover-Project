@@ -27,9 +27,13 @@ def decision_step(Rover):
                     Rover.throttle = 0
                 Rover.brake = 0
                 Rover.steer = 0
+                # when the steering angle becomes too large
+                # it better to be stopped and rotates before 
+                # back to moving forward
                 if abs(nav_angles) > over_steering_angle:
                     Rover.brake = Rover.brake_set
                     Rover.mode = 'stop'
+                # add a filter to smooth the motion
                 elif abs(nav_angles) > smoothing_angle:
                     # Set steering to average angle clipped to the range +/- 15
                     Rover.steer = np.clip(nav_angles, -15, 15)
@@ -58,7 +62,7 @@ def decision_step(Rover):
                     Rover.brake = 0
                     # Turn range is +/- 15 degrees, when stopped the next line will induce 4-wheel turning
                     Rover.steer = -15 # Could be more clever here about which way to turn
-                # If we're stopped but see sufficient navigable terrain in front then go!
+                # If we're stopped but see sufficient navigable terrain in front and the nav_angles not too steep then go!
                 if ((len(Rover.nav_angles) >= Rover.go_forward) and (abs(nav_angles) < over_steering_angle)): 
                     # Set throttle back to stored value
                     Rover.throttle = Rover.throttle_set

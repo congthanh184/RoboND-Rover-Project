@@ -72,14 +72,14 @@ def pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale):
 def color_in_range(img, rgb_min=(135, 115, 0), rgb_max=(200, 155, 30)):
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
-    # Require that each pixel be above all three threshold values in RGB
-    # above_thresh will now contain a boolean array with "True"
+    # Require that each pixel be in the ranges established by threshold max and min values in RGB
+    # in_thresh will now contain a boolean array with "True"
     # where threshold was met
-    above_thresh = (img[:,:,0] > rgb_min[0]) & (img[:,:,0] < rgb_max[0]) \
+    in_thresh = (img[:,:,0] > rgb_min[0]) & (img[:,:,0] < rgb_max[0]) \
                 & (img[:,:,1] > rgb_min[1]) & (img[:,:,1] < rgb_max[1]) \
                 & (img[:,:,2] > rgb_min[2]) & (img[:,:,2] < rgb_max[2])
     # Index the array of zeros with the boolean array and set to 1
-    color_select[above_thresh] = 1
+    color_select[in_thresh] = 1
     # Return the binary image
     return color_select
 
@@ -90,6 +90,8 @@ def get_world_coords_from_binary_map(threshed, rover_xpos, rover_ypos, rover_yaw
         worldmap.shape[0], scale)
     return x_world, y_world
 
+# Determine if the current situation is suitable to update the world map
+# by checking the pitch and roll angle of rover
 def is_motion_stable(pitch, roll, threshold=(0.3, 0.3)):
     return (abs(pitch) < threshold[0]) & (abs(roll) < threshold[1])
 
